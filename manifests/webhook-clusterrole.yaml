@@ -1,0 +1,47 @@
+# Cluster Role for Mutating Admission webhook
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: admission-webhook-cr
+  labels:
+    app: admission-webhook
+rules:
+  - apiGroups: [""]
+    resources: [pods, events]
+    verbs: ["*"]
+  - apiGroups: [apps]
+    resources: [deployments, daemonsets, replicasets, statefulsets]
+    verbs: ["*"]
+  - apiGroups: [autoscaling]
+    resources: ["horizontalpodautoscalers", "horizontalpodautoscalers/status"]
+    verbs: ["get", "list", "watch", "create", "patch", "update", "delete", "deletecollection"]
+  - apiGroups: [""]
+    resources: [serviceaccounts]
+    verbs: [get]
+---
+# Cluster Role for creating secrets with client certificate which is signed by K8S CA and private key
+# More details: https://github.com/ealebed/admission-webhook-certificator
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: webhook-cert-sa-cr
+rules:
+  - apiGroups: [admissionregistration.k8s.io]
+    resources: [mutatingwebhookconfigurations]
+    verbs: [get, create, patch]
+  - apiGroups: [certificates.k8s.io]
+    resources: [certificatesigningrequests]
+    verbs: [get, create, delete, list, watch]
+  - apiGroups: [certificates.k8s.io]
+    resources: [certificatesigningrequests/approval]
+    verbs: [update]
+  - apiGroups: [certificates.k8s.io]
+    resources: [signers]
+    resourceNames: [kubernetes.io/*] # example.com/* can be used to authorize for all signers in the 'example.com' domain
+    verbs: [approve]
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [create, get, patch, update]
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [get]

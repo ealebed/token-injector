@@ -1,0 +1,30 @@
+# Mutating Webhook Configuration for admission webhook
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: mutating-admission-webhook-cfg
+  labels:
+    app: admission-webhook
+webhooks:
+  - name: admission-webhook.example.com
+    sideEffects: None
+    admissionReviewVersions: ["v1", "v1beta1"]
+    clientConfig:
+      service:
+        name: admission-webhook-svc
+        namespace: webhook
+        path: "/pods"
+      # get CA bundle for use by webhook bootstrap
+      # caBundle=$(kubectl config view --raw --flatten -o json | jq -r '.clusters[] | select(.name == "'$(kubectl config current-context)'") | .cluster."certificate-authority-data"')
+      caBundle: ${CA_BUNDLE} # place real value here
+    namespaceSelector:
+      matchExpressions:
+        - key: admission.token-injector/enabled
+          operator: Exists
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: ["*"]
+        apiVersions: ["*"]
+        resources: ["pods"]
+        scope: "Namespaced"
+    failurePolicy: Ignore

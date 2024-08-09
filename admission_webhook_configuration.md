@@ -1,0 +1,340 @@
+# `token-injector` Webhook Configuration
+
+## Configuration steps and prerequisites
+1. Container images for `token-injector-webhook`, `token-injector` tool and `certificator` tool (see separate [repository](https://github.com/ealebed/admission-webhook-certificator)) should be built and uploaded to the Google Artifact Registry (or other container repository accessible from GKE cluster).
+
+2. Google Service account which will be used for accessing AWS resources must be created with the following roles:
+  - `roles/iam.workloadIdentityUser` - to impersonate service accounts from GKE Workloads
+  - `roles/iam.serviceAccountTokenCreator` - to create OAuth2 access tokens, sign blobs, or sign JWTs
+
+3. The Google Service account OAuth 2 Client ID value should be used when configuring AWS IAM Role Trusted entities.
+  - To obtain OAuth 2 Client ID from Google Cloud Console go to *IAM & Admin* -> *Service accounts* page, find the needed Service Account and copy the Client ID value, e.g. `194328211923566408734`
+  - To obtain OAuth 2 Client ID from terminal use the following command:
+  ```bash
+  gcloud iam service-accounts describe --format json ${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com  | jq -r '.uniqueId'
+  ```
+  where `${GSA_NAME}` is the name of the GCP Service Account and `${PROJECT_ID}` is your Google Project ID.
+
+4. The GKE cluster with enabled Workload Identity must be created.
+
+5. AWS IAM Role with Google OIDC Web Identity must be created with attached permissions policy and trust policy documents.
+  - To create AWS IAM permissions policy from the AWS Management Console:
+    - Go to *Identity and Access Management (IAM)* -> *Policies*
+    - Click on the **Create policy** button
+    - On the *Specify permissions* step, choose JSON as the policy editor
+    - Paste the JSON permissions policy document (see example below)
+    - Click on the **Next** button
+    - On the *Review and create* step, enter Policy name (e.g. `gcp-reader`) and Description (optional)
+    - Click on the **Create policy** button
+  - To create AWS IAM Role with Google OIDC Web Identity from the AWS Management Console:
+    - Go to *Identity and Access Management (IAM)* -> *Roles*
+    - Click on the **Create role** button
+    - On the *Select trusted entity* step, choose the **Web identity** type
+    - For *Identity provider*, from the dropdown list, select Google
+    - In the *Audience* field paste the Service account's OAuth 2 Client ID (from the 3nd step)
+    - Click on the **Next** button
+    - On the *Add permissions* step, filter existing policies by *Customer managed* type
+    - Find and select the permission policy created in the previous step (e.g. `gcp-reader`)
+    - Click on the **Next** button
+    - On the *Name, review, and create* step, enter Role name (e.g. `gcp_reader_role`) and Description (optional)
+    - Click on the **Create role** button
+
+> Copy the ARN value for created AWS IAM Role with Google OIDC Web Identity (e.g. `arn:aws:iam::123456789012:role/gcp_reader_role`). This value should be used later to assign the `aws_role_arn` annotaion to the Kubernetes service account.
+
+6. GKE namespaces for Application(s) workload and Admission webhook.
+
+7. GKE Service Account for creation secret (with signed certificate and private key) and running Admission webhook in respective GKE namespace (see example in separate [repository](https://github.com/ealebed/admission-webhook-certificator/blob/master/manifests/service-account.yaml)).
+
+8. GKE Cluster Role and Cluster Role Binding for Admission webhook Service Account.
+
+9. GKE Cluster Role and Cluster Role Binding for `certificator` tool Service Account (see exapmles in separate [repository](https://github.com/ealebed/admission-webhook-certificator/tree/master/manifests))
+
+10. Annotated GKE Service Account(s) for running Application(s) workload in respective GKE namespace(s).
+
+11. GKE Job for `certificator` tool (used for creation secret with signed certificate and private key) (see example in separate [repository](https://github.com/ealebed/admission-webhook-certificator/blob/master/manifests/job.yaml)).
+
+12. GKE Deployment for running Admission webhook in respective GKE namespace.
+
+13. GKE Service which points to the Admission webhook Deployment in the respective GKE namespace.
+
+14. GKE MutatingWebhookConfiguration for registering Admission webhook. Read [more](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/).
+
+> **NOTE:** Almost all steps are already ["terraformed"](./terraform/) or can be created from [`*.yaml` files](./manifests/). For manual configuration see instructions below.
+
+## Manual Configuration Flow
+
+### Flow variables
+
+- `PROJECT_ID` - GCP project ID
+- `CLUSTER_NAME` - GKE cluster name
+- `CLUSTER_ZONE` - GKE cluster zone
+- `GSA_NAME` - Google Cloud Service Account name (choose any)
+- `GSA_ID` - Google Cloud Service Account unique ID (generated by Google)
+- `KSA_NAME` - Kubernetes Service Account name (choose any)
+- `KSA_NAMESPACE` - Kubernetes namespace
+- `AWS_ROLE_NAME` - AWS IAM role name (choose any)
+- `AWS_POLICY_NAME` - AWS IAM policy to assign to IAM role
+- `AWS_ROLE_ARN` - AWS IAM Role ARN identifier (generated by AWS)
+
+### GCP: Enable GKE Workload Identity
+
+Create a new GKE cluster with [Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) enabled:
+
+```sh
+gcloud container clusters create ${CLUSTER_NAME} \
+    --zone=${CLUSTER_ZONE} \
+    --workload-pool=${PROJECT_ID}.svc.id.goog
+```
+
+or update an existing cluster:
+
+```sh
+gcloud container clusters update ${CLUSTER_NAME} \
+    --zone=${CLUSTER_ZONE} \
+    --workload-pool=${PROJECT_ID}.svc.id.goog
+```
+
+### GCP: Configure GCP Service Account
+
+Create Google Cloud Service Account:
+
+```sh
+# create GCP Service Account
+gcloud iam service-accounts create ${GSA_NAME}
+
+# get GCP SA UID to be used for AWS Role with Google OIDC Web Identity
+GSA_ID=$(gcloud iam service-accounts describe --format json ${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com  | jq -r '.uniqueId')
+```
+
+Update `GSA_NAME` Google Service Account with following roles:
+
+- `roles/iam.workloadIdentityUser` - impersonate service accounts from GKE Workloads
+- `roles/iam.serviceAccountTokenCreator` - impersonate service accounts to create OAuth2 access tokens, sign blobs, or sign JWTs
+
+```sh
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+  --member serviceAccount:${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com \
+  --role roles/iam.serviceAccountTokenCreator
+
+gcloud iam service-accounts add-iam-policy-binding \
+  --role roles/iam.workloadIdentityUser \
+  --member "serviceAccount:${PROJECT_ID}.svc.id.goog[${KSA_NAMESPACE}/${KSA_NAME}]" \
+  ${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+```
+
+### AWS: Create AWS IAM permissions policy
+- Prepare the role permissions policy document (JSON) for Google OIDC provider:
+```bash
+cat > gcp-role-policy.json << EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetResourcePolicy",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:ListSecretVersionIds",
+                "secretsmanager:ListSecrets"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sts:AssumeRole"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "rds:DescribeDBClusters"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53resolver:*",
+                "route53:*"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:AbortMultipartUpload",
+                "s3:ListBucket",
+                "s3:DeleteObject",
+                "s3:GetObjectVersion",
+                "s3:ListMultipartUploadParts"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "sqs:*",
+            "Resource": "*"
+        },
+        {
+            "Action": [
+                "logs:*",
+                "cloudwatch:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateServiceLinkedRole",
+                "iam:DeleteServiceLinkedRole",
+                "iam:ListRoles",
+                "iam:ListInstanceProfiles",
+                "organizations:DescribeOrganization",
+                "account:ListRegions"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Action": "iam:CreateServiceLinkedRole",
+            "Resource": "arn:aws:iam::*:role/aws-service-role/*",
+            "Effect": "Allow"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "acm:DescribeCertificate",
+                "acm:ListCertificates",
+                "apigateway:GET",
+                "elasticloadbalancing:*",
+                "events:*",
+                "globalaccelerator:*",
+                "iam:ListPolicies",
+                "iam:ListRoles",
+                "iam:ListRoleTags",
+                "servicequotas:GetServiceQuota"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+```
+
+- Create the AWS IAM permissions policy:
+```bash
+aws iam create-policy --policy-name ${AWS_POLICY_NAME} --policy-document file://gcp-role-policy.json
+```
+
+### AWS: Create an AWS IAM Role with Google OIDC Web Identity using AWS CLI:
+- Prepare the role trust policy document (JSON) for Google OIDC provider:
+```bash
+cat > gcp-trust-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "accounts.google.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "accounts.google.com:aud": "${GSA_ID}"
+        }
+      }
+    }
+  ]
+}
+EOF
+```
+
+- Create the AWS IAM Role with Google Web Identity:
+```bash
+aws iam create-role --role-name ${AWS_ROLE_NAME} --assume-role-policy-document file://gcp-trust-policy.json
+```
+
+- Attach the desired policies to the AWS IAM role:
+```bash
+aws iam attach-role-policy --role-name ${AWS_ROLE_NAME} --policy-arn arn:aws:iam::123456789012:policy/${AWS_POLICY_NAME}
+```
+
+- Get the AWS Role ARN:
+```bash
+aws iam get-role --role-name ${AWS_ROLE_NAME} --query Role.Arn --output text
+```
+
+### GKE: Kubernetes Service Account
+- Create K8s namespace:
+```bash
+kubectl create namespace ${KSA_NAMESPACE}
+```
+
+- Create K8s Service Account:
+```bash
+kubectl create serviceaccount --namespace ${KSA_NAMESPACE} ${KSA_NAME}
+```
+
+- Annotate K8s Service Account with GKE Workload Identity (GCP Service Account email)
+```bash
+kubectl annotate serviceaccount --namespace ${KSA_NAMESPACE} ${KSA_NAME} \
+  iam.gke.io/gcp-service-account=${GSA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+```
+
+- Annotate K8s Service Account with AWS Role ARN:
+```bash
+kubectl annotate serviceaccount --namespace ${KSA_NAMESPACE} ${KSA_NAME} \
+  amazonaws.com/role-arn=${AWS_ROLE_ARN}
+```
+
+## Testing
+Create a k8s Pod as shown below:
+```bash
+cat > test-pod.yaml << EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod
+  namespace: application-namespace # Namespace for Application Workload
+  labels:
+    admission.token-injector/enabled: "true"
+spec:
+  serviceAccountName: ${KSA_NAME} # Annotated GKE Service Account in corresponding namespace, e.g. aws-reader-sa
+  containers:
+  - name: test-pod
+    image: mikesir87/aws-cli
+    command: ["tail", "-f", "/dev/null"]
+EOF
+```
+
+Connect to the running k8s Pod:
+```bash
+kubectl exec -it test-pod -n application-namespace -- bash
+```
+
+Run the following command in the Pod shell to check the AWS assumed role:
+```bash
+aws sts get-caller-identity
+```
+
+The output should look similar to the below:
+```text
+{
+    "UserId": "AROA9GB4GPRFFXVHNSLCK:token-injector-webhook-gyaashbbeeqhpvfw",
+    "Account": "906385953612",
+    "Arn": "arn:aws:sts::906385953612:assumed-role/bucket-full-token-injector/token-injector-webhook-gyaashbbeeqhpvfw"
+}
+```

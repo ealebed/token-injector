@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admission-webhook-deployment
+  namespace: webhook
+  labels:
+    app: admission-webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admission-webhook
+  template:
+    metadata:
+      labels:
+        app: admission-webhook
+    spec:
+      containers:
+        - name: admission-webhook
+          image: ealebed/token-injector-webhook
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+          args:
+            - --log-level=debug
+            - server
+            - --tls-cert-file=/etc/webhook/certs/tls.crt
+            - --tls-private-key-file=/etc/webhook/certs/tls.key
+            - --image=ealebed/token-injector
+            - --pull-policy=Always
+          volumeMounts:
+            - name: webhook-certs
+              mountPath: /etc/webhook/certs
+              readOnly: true
+      serviceAccountName: webhook-sa
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: webhook-certs
