@@ -35,9 +35,6 @@ RUN make
 #
 FROM alpine:3.20 as certs
 RUN apk --update add ca-certificates
-# this is for debug only Alpine image
-COPY --from=build /go/src/token-injector/.bin/github.com/cisco-sbg/valtix-gcp-ops/token-injector /token-injector
-CMD ["/token-injector"]
 
 #
 # ------ token-injector release Docker image ------
@@ -48,6 +45,6 @@ FROM scratch
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 # this is the last commabd since it's never cached
-COPY --from=build /go/src/token-injector/.bin/github.com/cisco-sbg/valtix-gcp-ops/token-injector /token-injector
+COPY --from=build /go/src/token-injector/.bin/github.com/ealebed/token-injector/token-injector /token-injector
 
 ENTRYPOINT ["/token-injector"]
