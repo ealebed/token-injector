@@ -50,5 +50,5 @@ jobs:
         if: steps.changes-token-injector-webhook.outputs.src == 'true'
         with:
           version: v1.60.2
-          working-directory: cmd/gtoken-injector-webhook/
+          working-directory: cmd/token-injector-webhook/
           args: --timeout 4m --config .golangci.yaml
