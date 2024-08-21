@@ -35,9 +35,8 @@ RUN make
 FROM alpine:3.20 as certs
 RUN apk --update add ca-certificates
 
-
 #
-# ------ token-injector release Docker image ------
+# ------ token-injector-webhook release Docker image ------
 #
 FROM scratch
 
