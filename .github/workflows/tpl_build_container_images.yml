@@ -1,0 +1,73 @@
+name: 'Template:Build&Push Container Images'
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    name: 'Build & push image'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: 'Check input'
+        run: |
+          if "${{ github.event.inputs.branch != '' }}"; then
+            echo "INPUT_BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+          else
+            echo "INPUT_BRANCH=master" >> $GITHUB_ENV
+          fi
+
+      - name: 'Decide on tag'
+        id: tagger
+        run: |
+          tag=$(echo "${{ env.INPUT_BRANCH }}" | sed -e 's/^refs\/heads\///g' -e 's/^refs\/tags\///g' -e 's/^refs\/pull\///g' -e 's/\/merge$//g' | sed -e 's/master/latest/g' | sed -e 's/\//-/g')
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
+
+      - name: 'Detect token-injector changes'
+        uses: dorny/paths-filter@v3
+        id: changes-token-injector
+        with:
+          filters: |
+            src:
+              - 'cmd/token-injector/**'
+    
+      - name: 'Detect token-injector-webhook changes'
+        uses: dorny/paths-filter@v3
+        id: changes-token-injector-webhook
+        with:
+          filters: |
+            src:
+              - 'cmd/token-injector-webhook/**'
+
+      - name: 'Login to Docker Hub'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 'Set up Docker Buildx'
+        uses: docker/setup-buildx-action@v3
+
+      - name: 'Build and push token-injector container image'
+        uses: docker/build-push-action@v6
+        # run only if some file in 'src' folder was changed or workflow was triggered manually
+        if: ${{ (github.event_name == 'workflow_dispatch') || steps.changes-token-injector.outputs.src == 'true' }}
+        with:
+          context: cmd/token-injector
+          push: true
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/token-injector:${{ steps.tagger.outputs.tag }}
+
+      - name: 'Build and push token-injector-webhook container image'
+        uses: docker/build-push-action@v6
+        # run only if some file in 'src' folder was changed or workflow was triggered manually
+        if: ${{ (github.event_name == 'workflow_dispatch') || steps.changes-token-injector-webhook.outputs.src == 'true' }}
+        with:
+          context: cmd/token-injector-webhook
+          push: true
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/token-injector-webhook:${{ steps.tagger.outputs.tag }}
