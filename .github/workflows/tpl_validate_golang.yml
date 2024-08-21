@@ -1,0 +1,54 @@
+name: 'Template:Validate GOLANG codebase'
+
+on:
+  workflow_call:
+
+jobs:
+  validate:
+    name: 'Validate golang layer'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Install Golang'
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+          cache: false
+
+      - name: 'Detect token-injector changes'
+        uses: dorny/paths-filter@v3
+        id: changes-token-injector
+        with:
+          filters: |
+            src:
+              - 'cmd/token-injector/**'
+  
+      - name: 'Detect token-injector-webhook changes'
+        uses: dorny/paths-filter@v3
+        id: changes-token-injector-webhook
+        with:
+          filters: |
+            src:
+              - 'cmd/token-injector-webhook/**'
+
+      - name: 'golangci lint token-injector'
+        uses: golangci/golangci-lint-action@v3
+        # run only if some file in 'src' folder was changed
+        if: steps.changes-token-injector.outputs.src == 'true'
+        with:
+          version: v1.60.2
+          working-directory: cmd/token-injector/
+          args: --timeout 4m --config .golangci.yaml
+  
+      - name: 'golangci lint token-injector-webhook'
+        uses: golangci/golangci-lint-action@v3
+        # run only if some file in 'src' folder was changed
+        if: steps.changes-token-injector-webhook.outputs.src == 'true'
+        with:
+          version: v1.60.2
+          working-directory: cmd/gtoken-injector-webhook/
+          args: --timeout 4m --config .golangci.yaml
