@@ -13,8 +13,9 @@ spec:
         - name: webhook-cert-setup
           image: ealebed/certificator:latest
           args:
+            - "certify"
             - "--service"
-            - "webhook-svc"
+            - "admission-webhook-svc"
             - "--namespace"
             - "webhook"
             - "--secret"
