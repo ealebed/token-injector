@@ -1,0 +1,38 @@
+# Binding Cluster Role for Mutating Admission webhook to relevant GKE Service Account
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: admission-webhook-crb 
+  labels:
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ tpl ($value | toString) $ }}
+  {{- end }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.webhookSA }}
+  namespace: {{ .Values.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admission-webhook-cr
+---
+# Binding Cluster Role for creating secrets to relevant GKE Service Account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admission-webhook-cert-setup-crb
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ tpl ($value | toString) $ }}
+  {{- end }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.certificatorSA }}
+  namespace: {{ .Values.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admission-webhook-cert-setup-cr

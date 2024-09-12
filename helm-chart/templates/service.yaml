@@ -1,0 +1,18 @@
+# Service for admission webhook
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.webhookService }}
+  namespace: {{ .Values.namespace }}
+  labels:
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ tpl ($value | toString) $ }}
+  {{- end }}
+spec:
+  ports:
+  - port: 443
+    targetPort: 8443
+  selector:
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ tpl ($value | toString) $ }}
+  {{- end }}

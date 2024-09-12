@@ -1,13 +1,3 @@
-# GKE namespace for running Mutating Admission webhook and Certificator tool
-resource "kubernetes_namespace_v1" "webhook" {
-  metadata {
-    name = "webhook"
-    labels = {
-      app = "admission-webhook"
-    }
-  }
-}
-
 # GKE Service Account in relevant GKE namespace to run Mutating Admission webhook from
 resource "kubernetes_service_account_v1" "webhook_sa" {
   metadata {
@@ -322,7 +312,7 @@ resource "kubernetes_mutating_webhook_configuration_v1" "this" {
         namespace = kubernetes_namespace_v1.webhook.metadata[0].name
         path      = "/pods"
       }
-      ca_bundle = base64decode("kube_ca_certificate") // TODO: place real value
+      ca_bundle = base64decode(module.gke.ca_certificate)
     }
     object_selector {
       match_expressions {

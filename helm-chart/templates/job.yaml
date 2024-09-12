@@ -1,0 +1,31 @@
+# Job for creating secrets with client certificate which is signed by K8S CA and private key
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: webhook-cert-setup
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ tpl ($value | toString) $ }}
+  {{- end }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.certificatorSA }}
+      containers:
+        - name: webhook-cert-setup
+          image: {{ .Values.certificatorImage }}
+          args:
+            - "certify"
+            - "--service"
+            - {{ .Values.webhookService | quote}}
+            - "--namespace"
+            - {{ .Values.namespace | quote}}
+            - "--secret"
+            - "webhook-certs"
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+  backoffLimit: 0

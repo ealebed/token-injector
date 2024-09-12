@@ -4,19 +4,19 @@ kind: MutatingWebhookConfiguration
 metadata:
   name: mutating-admission-webhook-cfg
   labels:
-    app: admission-webhook
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ tpl ($value | toString) $ }}
+  {{- end }}
 webhooks:
   - name: admission-webhook.example.com
     sideEffects: None
     admissionReviewVersions: ["v1", "v1beta1"]
     clientConfig:
       service:
-        name: admission-webhook-svc
-        namespace: webhook
+        name: {{ .Values.webhookService }}
+        namespace: {{ .Values.namespace }}
         path: "/pods"
-      # get CA bundle for use by webhook bootstrap
-      # caBundle=$(kubectl config view --raw --flatten -o json | jq -r '.clusters[] | select(.name == "'$(kubectl config current-context)'") | .cluster."certificate-authority-data"')
-      caBundle: ${CA_BUNDLE} # place real value here
+      caBundle: {{ .Values.apiserverCABundle }}
     objectSelector:
       matchExpressions:
         - key: admission.token-injector/enabled

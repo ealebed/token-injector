@@ -1,0 +1,88 @@
+# Deployment for admission webhook server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admission-webhook-deployment
+  namespace: {{ .Values.namespace }}
+  labels:
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ tpl ($value | toString) $ }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+    {{- range $key, $value := .Values.labels }}
+      {{ $key }}: {{ tpl ($value | toString) $ }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+      {{- range $key, $value := .Values.labels }}
+        {{ $key }}: {{ tpl ($value | toString) $ }}
+      {{- end }}
+    spec:
+      containers:
+        - name: admission-webhook
+          image: {{ .Values.webhookImage }}
+          imagePullPolicy: Always
+          args:
+            - --log-level=debug
+            - server
+            - --tls-cert-file=/etc/webhook/certs/tls.crt
+            - --tls-private-key-file=/etc/webhook/certs/tls.key
+            - --image={{ .Values.tokenRequesterImage }}
+            - --pull-policy=Always
+          ports:
+          - containerPort: 8443
+            name: https
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+              - NET_RAW
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: false
+          volumeMounts:
+            - name: webhook-certs
+              mountPath: /etc/webhook/certs
+              readOnly: true
+      serviceAccountName: {{ .Values.webhookSA }}
+      automountServiceAccountToken: true
+      enableServiceLinks: true
+      volumes:
+        - name: webhook-certs
+          secret:
+            defaultMode: 420
+            optional: false
+            secretName: webhook-certs

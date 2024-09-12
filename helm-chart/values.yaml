@@ -1,0 +1,30 @@
+# Default values for webhook.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# GKE namespace for running Mutating Admission webhook and Certificator tool.
+namespace: webhook
+
+# GKE Service Account in relevant GKE namespace to run Mutating Admission webhook from.
+webhookSA: admission-webhook-sa
+
+# GKE Service Account in relevant GKE namespace to create K8S Secret with TLS type that
+# includes corresponding client certificate signed by K8S CA and private key.
+certificatorSA: admission-webhook-cert-sa
+
+# Service for admission webhook
+webhookService: admission-webhook-svc
+
+# Container images
+webhookImage: "ealebed/token-injector-webhook:latest"
+tokenRequesterImage: "ealebed/token-injector:latest"
+certificatorImage: "ealebed/certificator:latest"
+
+# Common labels for Mutating Admission webhook and Certificator tool
+labels:
+  app: admission-webhook
+
+# PEM encoded CA bundle which will be used to validate the webhook’s server certificate
+# To pass the value 'in runtime' when running helm command you can use `--set` parameter, e.g.:
+# helm install ... --set apiserverCABundle=$(kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}')
+apiserverCABundle: ""

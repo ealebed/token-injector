@@ -22,7 +22,7 @@ The AWS SDK will automatically request temporary AWS credentials from the STS se
 - `AWS_ROLE_SESSION_NAME` - the name applied to this assume-role session
 
 ## `token-injector-webhook` Mutation Flow
-The `token-injector-webhook` is a Kubernetes mutating admission webhook that mutates any k8s Pod running under [**specially annotated Kubernetes Service Account**](./cmd/token-injector-webhook/README.md) and labeled with
+The `token-injector-webhook` is a Kubernetes mutating admission webhook that mutates any k8s Pod running under [**specifically annotated Kubernetes Service Account**](./cmd/token-injector-webhook/README.md) and labeled with
 ```yaml
 admission.token-injector/enabled: "true"
 ```
@@ -36,13 +36,16 @@ The `token-injector-webhook`:
 The AWS SDK will automatically make the corresponding `AssumeRoleWithWebIdentity` calls to AWS STS on your behalf, handling in-memory caching as well as refreshing credentials as needed.
 
 On high-level this `token-injector-webhook` mutation flow described on diagram below:
-![mutation_flow](./images/gtoken_webhook_mutation_flow.png)
+![mutation_flow](./docs/images/gtoken_webhook_mutation_flow.png)
 
 ## `token-injector` Tool
 The `token-injector` tool can get Google Cloud ID token when running under GCP Service Account (for example, GKE Pod with Workload Identity). Read [more](./cmd/token-injector/README.md).
 
 ## Mutating Webhook Configuration
-All required steps for configuring Kubernetes Mutating Admission webhook are described in [separate document](./admission_webhook_configuration.md).
+All required steps for configuring Kubernetes Mutating Admission webhook are described in separate documents:
+- [Manual configuration](./docs/manual_configuration.md)
+- [Terraform configuration](./docs/terraform_configuration.md)
+- [HELM chart configuration](./docs/helm_configuration.md)
 
 ## External references
 - [Amazon EKS Pod Identity Webhook](https://github.com/aws/amazon-eks-pod-identity-webhook)
@@ -55,8 +58,3 @@ For creation and signing certificate was created separate tool, which could be r
 - [Admission webhook certificator](https://github.com/ealebed/admission-webhook-certificator)
 
 I've inspired the initial mutating admission webhook code from [doitintl/gtoken](https://github.com/doitintl/gtoken/tree/master) repository. Big thanks to Alexei Ledenev!
-
-## TODO:
-- Finish Terraform implementation
-- Retest *.yaml files implementation
-- Create HELM chart for Admission webhook
