@@ -12,6 +12,8 @@ provider "google-beta" {
   ]
 }
 
+provider "aws" {}
+
 data "google_client_config" "default" {}
 
 provider "kubernetes" {
