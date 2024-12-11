@@ -10,7 +10,7 @@ require (
 	github.com/slok/kubewebhook/v2 v2.7.0
 	github.com/urfave/cli v1.22.16
 	k8s.io/api v0.31.3
-	k8s.io/apimachinery v0.31.3
+	k8s.io/apimachinery v0.31.4
 	k8s.io/client-go v0.31.3
 	sigs.k8s.io/controller-runtime v0.19.3
 )
