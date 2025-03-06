@@ -1,14 +1,13 @@
 module github.com/ealebed/token-injector/token-injector
 
 go 1.23
-
 require (
 	cloud.google.com/go/compute/metadata v0.6.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v2 v2.27.6
-	golang.org/x/oauth2 v0.26.0
+	golang.org/x/oauth2 v0.28.0
 	google.golang.org/api v0.221.0
 )
 
