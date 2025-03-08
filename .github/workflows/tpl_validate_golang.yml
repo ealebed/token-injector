@@ -16,7 +16,7 @@ jobs:
       - name: 'Install Golang'
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23'
+          go-version: '1.24'
           cache: false
 
       - name: 'Detect token-injector changes'
@@ -40,7 +40,7 @@ jobs:
         # run only if some file in 'src' folder was changed
         if: steps.changes-token-injector.outputs.src == 'true'
         with:
-          version: v1.60.2
+          version: v1.64.6
           working-directory: cmd/token-injector/
           args: --timeout 4m --config .golangci.yaml
   
@@ -49,6 +49,6 @@ jobs:
         # run only if some file in 'src' folder was changed
         if: steps.changes-token-injector-webhook.outputs.src == 'true'
         with:
-          version: v1.60.2
+          version: v1.64.6
           working-directory: cmd/token-injector-webhook/
           args: --timeout 4m --config .golangci.yaml
