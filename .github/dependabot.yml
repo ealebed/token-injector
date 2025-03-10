@@ -3,12 +3,12 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/cmd/token-injector"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     reviewers:
     - "ealebed"
   - package-ecosystem: "gomod"
     directory: "/cmd/token-injector-webhook"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     reviewers:
     - "ealebed"

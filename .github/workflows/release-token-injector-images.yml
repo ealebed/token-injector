@@ -1,0 +1,145 @@
+name: 'Build and Push Container Images'
+
+"on":
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+  workflow_dispatch: {}
+
+jobs:
+  check_if_code_changed:
+    name: 'Check if code changed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: Detect source code or helm chart changed
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            source_code:
+              - cmd/**
+              - helm-chart/**
+              - .github/**
+    outputs:
+      check: ${{ steps.changes.outputs.source_code }}
+    
+  get_image_version:
+    name: Get image version
+    if: |
+      github.event.pull_request.merged == true ||  github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      # required to read from the repo
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get image version
+        id: get_image_version
+        run: |
+          short_sha="$(git rev-parse --short=7 HEAD)"
+          echo "short_sha=${short_sha}"
+          echo "short_sha=${short_sha}" >> "${GITHUB_OUTPUT}"
+    outputs:
+      short_sha: ${{ steps.get_image_version.outputs.short_sha }}
+    
+  build_and_push_images:
+    name: Build and push images
+    needs:
+      - get_image_version
+      - check_if_code_changed
+    runs-on: ubuntu-latest
+    env:
+      SHORT_SHA: ${{ needs.get_image_version.outputs.short_sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GHA_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: mex-token-injector-pr-merge-workflow-main@prefect-org-github-actions.iam.gserviceaccount.com
+      - name: Configure Google Cloud credential helper
+        run: gcloud auth configure-docker --quiet us-docker.pkg.dev
+      # only build new image if source code was updated
+      - name: Build container image
+        if: needs.check_if_code_changed.outputs.check == 'true'
+        run: docker build "${{ github.workspace }}" --no-cache -t local-mex-aws-token-injector:${{ env.SHORT_SHA }}
+      # otherwise, fetch the :latest image from dev
+      - name: Fetch latest image from dev-cloud2
+        if: needs.check_if_code_changed.outputs.check == 'false'
+        run: |
+          docker pull us-docker.pkg.dev/prefect-dev-cloud2/mex-aws-token-injector/mex-aws-token-injector:latest
+          docker tag us-docker.pkg.dev/prefect-dev-cloud2/mex-aws-token-injector/mex-aws-token-injector:latest "local-mex-aws-token-injector:${{ env.SHORT_SHA }}"
+
+      - name: Push local-mex-aws-token-injector to dev-mex-aws-token-injector, stg-mex-aws-token-injector
+        run: |
+          target_repos=(
+            prefect-dev-cloud2/mex-aws-token-injector/mex-aws-token-injector
+            prefect-stg-cloud2/mex-aws-token-injector/mex-aws-token-injector
+          )
+          for repo in "${target_repos[@]}"; do
+            docker tag "local-mex-aws-token-injector:${{ env.SHORT_SHA }}" "us-docker.pkg.dev/${repo}:${{ env.SHORT_SHA }}"
+            docker tag "local-mex-aws-token-injector:${{ env.SHORT_SHA }}" "us-docker.pkg.dev/${repo}:latest"
+            docker push "us-docker.pkg.dev/${repo}" --all-tags
+          done
+
+  scan_image_for_vulnerabilities:
+    name: Scan image for vulnerabilities
+    if: |
+      (github.event.pull_request.merged == true ||  github.event_name == 'workflow_dispatch') &&
+      needs.check_if_code_changed.outputs.check == 'true'
+    needs:
+      - get_image_version
+      - build_and_push_images
+    runs-on: ubuntu-latest
+    env:
+      SHORT_SHA: ${{ needs.get_image_version.outputs.short_sha }}
+    permissions:
+      # required to read from the repo
+      contents: read
+      # required to obtain Google Cloud service account credentials
+      id-token: write
+      # required to upload CodeQL scan results to GitHub
+      actions: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GHA_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: mex-aws-token-injector-pr-merge-workflow-main@prefect-org-github-actions.iam.gserviceaccount.com
+      - name: Configure Google Cloud credential helper
+        run: gcloud auth configure-docker --quiet us-docker.pkg.dev
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: image
+          image-ref: us-docker.pkg.dev/prefect-dev-cloud2/mex-aws-token-injector/mex-aws-token-injector:${{ env.SHORT_SHA }}
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          scanners: vuln
+          hide-progress: true
+          format: sarif
+          output: trivy-results.sarif
+          timeout: 10m0s
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
+      - name: Upload Trivy scan results to CodeQL
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          # GHA pull_request events pass github_ref = "main" when closed
+          # whereas the code-scanning API expects the full git reference
+          # and `sha` is required by this action if `ref` is provided
+          ref: refs/heads/main
+          sha: ${{ github.sha }}
