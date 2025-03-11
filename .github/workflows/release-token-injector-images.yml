@@ -17,13 +17,13 @@ jobs:
       - name: 'Checkout code'
         uses: actions/checkout@v4
 
-      - name: Detect source code or helm chart changed
+      - name: Detect token-injector source code or helm chart changed
         uses: dorny/paths-filter@v3
         id: changes
         with:
           filters: |
             source_code:
-              - cmd/**
+              - cmd/token-injector/**
               - helm-chart/**
               - .github/**
     outputs:
@@ -64,16 +64,17 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ vars.GHA_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: mex-token-injector-pr-merge-workflow-main@prefect-org-github-actions.iam.gserviceaccount.com
+          workload_identity_provider: ${{ secrets.GHA_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: aws-tkn-inject-pr-mrg-wf-main@prefect-org-github-actions.iam.gserviceaccount.com
       - name: Configure Google Cloud credential helper
         run: gcloud auth configure-docker --quiet us-docker.pkg.dev
       # only build new image if source code was updated
       - name: Build container image
         if: needs.check_if_code_changed.outputs.check == 'true'
+        working-directory: cmd/token-injector
         run: docker build "${{ github.workspace }}" --no-cache -t local-mex-aws-token-injector:${{ env.SHORT_SHA }}
       # otherwise, fetch the :latest image from dev
-      - name: Fetch latest image from dev-cloud2
+      - name: Fetch latest token-injector image from dev-mex-aws-token-injector
         if: needs.check_if_code_changed.outputs.check == 'false'
         run: |
           docker pull us-docker.pkg.dev/prefect-dev-cloud2/mex-aws-token-injector/mex-aws-token-injector:latest
@@ -117,7 +118,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GHA_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: mex-aws-token-injector-pr-merge-workflow-main@prefect-org-github-actions.iam.gserviceaccount.com
+          service_account: aws-tkn-inject-pr-mrg-wf-main@prefect-org-github-actions.iam.gserviceaccount.com
       - name: Configure Google Cloud credential helper
         run: gcloud auth configure-docker --quiet us-docker.pkg.dev
       - name: Run Trivy vulnerability scanner
