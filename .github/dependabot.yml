@@ -1,14 +1,28 @@
 version: 2
 updates:
-  - package-ecosystem: "gomod"
-    directory: "/cmd/token-injector"
+  - package-ecosystem: github-actions
+    directory: /
+    commit-message:
+      prefix: chore
+    groups:
+      all:
+        patterns:
+          - "*"
+    labels:
+      - automated-dependency-updates
     schedule:
-      interval: "weekly"
-    reviewers:
-    - "ealebed"
-  - package-ecosystem: "gomod"
-    directory: "/cmd/token-injector-webhook"
+      interval: monthly
+
+  - package-ecosystem: gomod
+    directory: /cmd/token-injector
     schedule:
-      interval: "weekly"
-    reviewers:
-    - "ealebed"
+      interval: monthly
+    commit-message:
+      prefix: chore
+
+  - package-ecosystem: gomod
+    commit-message:
+      prefix: chore
+    directory: /cmd/token-injector-webhook
+    schedule:
+      interval: monthly
