@@ -11,9 +11,9 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slok/kubewebhook/v2 v2.7.0
 	github.com/urfave/cli v1.22.16
-	k8s.io/api v0.32.4
+	k8s.io/api v0.33.0
 	k8s.io/apimachinery v0.33.0
-	k8s.io/client-go v0.32.3
+	k8s.io/client-go v0.33.0
 	sigs.k8s.io/controller-runtime v0.20.4
 )
 
@@ -29,7 +29,6 @@ require (
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
