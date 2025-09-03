@@ -8,7 +8,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.8.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v2 v2.27.7
 	golang.org/x/oauth2 v0.30.0
 	google.golang.org/api v0.248.0
