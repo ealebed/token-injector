@@ -113,6 +113,14 @@ linters:
 issues:
     exclude:
       - Using the variable on range scope `tt` in function literal
+      - lintersdirective: "Function 'main' is too long"
+    exclude-rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+      - path: main\.go
+        linters:
+          - funlen
     # which dirs to skip
     exclude-dirs:
       - mocks
