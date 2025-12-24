@@ -28,7 +28,7 @@ linters-settings:
   lll:
     line-length: 160
   goimports:
-    local-prefixes: github.com/golangci/golangci-lint
+    local-prefixes: github.com/ealebed/token-injector
   gocritic:
     enabled-tags:
       - diagnostic
@@ -72,6 +72,11 @@ linters-settings:
           - k8s.io/client-go/kubernetes
           - sigs.k8s.io/controller-runtime/pkg/client/config
 
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
 linters:
   # please, do not use `enable-all`: it's deprecated and will be removed soon.
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
@@ -86,8 +91,6 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - goimports
     - gosec
     - gosimple
     - govet
