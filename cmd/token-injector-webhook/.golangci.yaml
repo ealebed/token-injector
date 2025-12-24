@@ -47,8 +47,7 @@ linters-settings:
       - wrapperFunc
   funlen:
     lines: -1
-    statements: 100
-    exclude: '^main$'
+    statements: 150
   depguard:
     rules:
       main:
@@ -114,6 +113,10 @@ linters:
 issues:
     exclude:
       - Using the variable on range scope `tt` in function literal
+    exclude-rules:
+      - source: "^func main"
+        linters:
+          - funlen
     # which dirs to skip
     exclude-dirs:
       - mocks
