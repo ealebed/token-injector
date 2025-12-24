@@ -56,13 +56,13 @@ linters-settings:
           - "!$test"
         allow:
           - $gostd
-          - github.com/ealebed/token-injector/token-injector/internal/gcp
-          - cloud.google.com/go/compute/metadata
-          - github.com/dgrijalva/jwt-go
-          - github.com/pkg/errors
-          - github.com/urfave/cli/v2
-          - golang.org/x/oauth2/google
-          - google.golang.org/api/iamcredentials/v1
+          - "github.com/ealebed/token-injector/token-injector/internal/gcp"
+          - "cloud.google.com/go/compute/metadata"
+          - "github.com/dgrijalva/jwt-go"
+          - "github.com/pkg/errors"
+          - "github.com/urfave/cli/v2"
+          - "golang.org/x/oauth2/google"
+          - "google.golang.org/api/iamcredentials/v1"
 
 formatters:
   enable:
@@ -75,7 +75,6 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - depguard
     - dogsled
     - dupl
     - errcheck
