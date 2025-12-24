@@ -156,7 +156,7 @@ func (mw *mutatingWebhook) getAwsRoleArn(ctx context.Context, name, ns string) (
 	if err != nil {
 		logger.WithFields(log.Fields{
 			"service account": name,
-			"namespace":      ns,
+			"namespace":       ns,
 		}).WithError(err).Fatalf("error getting service account")
 		return "", false, err
 	}

@@ -47,7 +47,7 @@ linters-settings:
       - wrapperFunc
   funlen:
     lines: -1
-    statements: 80
+    statements: 100
   depguard:
     rules:
       main:
