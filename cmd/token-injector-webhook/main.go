@@ -404,6 +404,7 @@ func runWebhook(c *cli.Context) error {
 	return nil
 }
 
+//nolint:funlen // main function contains CLI setup which requires many statements
 func main() {
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Printf("version: %s\n", c.App.Version)
