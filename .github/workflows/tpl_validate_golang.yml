@@ -36,7 +36,7 @@ jobs:
               - 'cmd/token-injector-webhook/**'
 
       - name: 'golangci lint token-injector'
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4
         # run only if some file in 'src' folder was changed
         if: steps.changes-token-injector.outputs.src == 'true'
         with:
@@ -45,7 +45,7 @@ jobs:
           args: --timeout 4m --config .golangci.yaml
   
       - name: 'golangci lint token-injector-webhook'
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4
         # run only if some file in 'src' folder was changed
         if: steps.changes-token-injector-webhook.outputs.src == 'true'
         with:
