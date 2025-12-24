@@ -154,7 +154,10 @@ func handlerFor(config mutating.WebhookConfig, recorder wh.MetricsRecorder, logg
 func (mw *mutatingWebhook) getAwsRoleArn(ctx context.Context, name, ns string) (string, bool, error) {
 	sa, err := mw.k8sClient.CoreV1().ServiceAccounts(ns).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		logger.WithFields(log.Fields{"service account": name, "namespace": ns}).WithError(err).Fatalf("error getting service account")
+		logger.WithFields(log.Fields{
+			"service account": name,
+			"namespace":      ns,
+		}).WithError(err).Fatalf("error getting service account")
 		return "", false, err
 	}
 	roleArn, ok := sa.GetAnnotations()[awsRoleArnKey]
@@ -262,7 +265,11 @@ func getInjectorContainer(name, image, pullPolicy, volumeName, volumePath, token
 		Name:            name,
 		Image:           image,
 		ImagePullPolicy: corev1.PullPolicy(pullPolicy),
-		Command:         []string{"/token-injector", fmt.Sprintf("--file=%s/%s", volumePath, tokenFile), fmt.Sprintf("--refresh=%t", refresh)},
+		Command: []string{
+			"/token-injector",
+			fmt.Sprintf("--file=%s/%s", volumePath, tokenFile),
+			fmt.Sprintf("--refresh=%t", refresh),
+		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
 				Name:      volumeName,
@@ -314,7 +321,11 @@ func before(c *cli.Context) error {
 	return nil
 }
 
-func (mw *mutatingWebhook) podMutator(ctx context.Context, ar *whmodel.AdmissionReview, obj metav1.Object) (*mutating.MutatorResult, error) {
+func (mw *mutatingWebhook) podMutator(
+	ctx context.Context,
+	ar *whmodel.AdmissionReview,
+	obj metav1.Object,
+) (*mutating.MutatorResult, error) {
 	switch v := obj.(type) {
 	case *corev1.Pod:
 		err := mw.mutatePod(ctx, v, ar.Namespace, ar.DryRun)
@@ -402,7 +413,8 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "token-injector-webhook"
 	app.Version = Version
-	app.Usage = "token-injector-webhook is a Kubernetes mutation controller providing a secure access to AWS services from GKE pods"
+	app.Usage = "token-injector-webhook is a Kubernetes mutation controller " +
+		"providing a secure access to AWS services from GKE pods"
 	app.Before = before
 	app.Flags = []cli.Flag{
 		cli.StringFlag{

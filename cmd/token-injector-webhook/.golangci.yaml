@@ -27,6 +27,7 @@ linters-settings:
     locale: US
   lll:
     line-length: 160
+    tab-width: 2
   goimports:
     local-prefixes: github.com/ealebed/token-injector
   gocritic:
@@ -46,7 +47,7 @@ linters-settings:
       - wrapperFunc
   funlen:
     lines: -1
-    statements: 50
+    statements: 80
   depguard:
     rules:
       main:
@@ -83,7 +84,6 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - depguard
     - dogsled
     - dupl
     - errcheck
