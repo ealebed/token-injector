@@ -100,7 +100,6 @@ linters:
     - nakedret
     - staticcheck
     - stylecheck
-    - typecheck
     - unconvert
     - unparam
     - unused
