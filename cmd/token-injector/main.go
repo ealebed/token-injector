@@ -22,7 +22,13 @@ var (
 	BuildDate = "unknown"
 )
 
-func generateIDToken(ctx context.Context, sa gcp.ServiceAccountInfo, idToken gcp.Token, file string, refresh bool) error {
+func generateIDToken(
+	ctx context.Context,
+	sa gcp.ServiceAccountInfo,
+	idToken gcp.Token,
+	file string,
+	refresh bool,
+) error {
 	// find out active Service Account, first by ID
 	serviceAccount, err := sa.GetID(ctx)
 	if err != nil {

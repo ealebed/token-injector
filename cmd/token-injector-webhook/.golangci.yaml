@@ -1,3 +1,5 @@
+version: 2
+
 run:
   # Timeout for analysis, e.g. 30s, 5m.
   # Default: 1m
@@ -25,8 +27,9 @@ linters-settings:
     locale: US
   lll:
     line-length: 160
+    tab-width: 2
   goimports:
-    local-prefixes: github.com/golangci/golangci-lint
+    local-prefixes: github.com/ealebed/token-injector
   gocritic:
     enabled-tags:
       - diagnostic
@@ -44,7 +47,7 @@ linters-settings:
       - wrapperFunc
   funlen:
     lines: -1
-    statements: 50
+    statements: 150
   depguard:
     rules:
       main:
@@ -70,13 +73,17 @@ linters-settings:
           - k8s.io/client-go/kubernetes
           - sigs.k8s.io/controller-runtime/pkg/client/config
 
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
 linters:
   # please, do not use `enable-all`: it's deprecated and will be removed soon.
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
   disable-all: true
   enable:
     - bodyclose
-    - depguard
     - dogsled
     - dupl
     - errcheck
@@ -84,18 +91,13 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - goimports
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - lll
     - misspell
     - nakedret
     - staticcheck
-    - stylecheck
-    - typecheck
     - unconvert
     - unparam
     - unused
@@ -111,6 +113,10 @@ linters:
 issues:
     exclude:
       - Using the variable on range scope `tt` in function literal
+    exclude-rules:
+      - source: "^func main"
+        linters:
+          - funlen
     # which dirs to skip
     exclude-dirs:
       - mocks

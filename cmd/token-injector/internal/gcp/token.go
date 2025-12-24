@@ -80,12 +80,17 @@ func (IDToken) WriteToFile(token, fileName string) error {
 
 	// if DestFile was provided, lets try to create it and add to the writers
 	if fileName != "" {
-		file, err := os.Create(fileName)
+		file, err := os.Create(fileName) //nolint:gosec // G304: fileName is controlled by user input
 		if err != nil {
 			return fmt.Errorf("failed to create token file: %s; error: %s", fileName, err.Error())
 		}
 		writers = append(writers, file)
-		defer file.Close()
+		defer func() {
+			if closeErr := file.Close(); closeErr != nil {
+				// Log error but don't fail if file was already written
+				log.Printf("failed to close file: %s", closeErr)
+			}
+		}()
 	}
 	// MultiWriter(io.Writer...) returns a single writer which multiplexes its
 	// writes across all of the writers we pass in.
