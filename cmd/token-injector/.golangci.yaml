@@ -27,6 +27,7 @@ linters-settings:
     locale: US
   lll:
     line-length: 160
+    tab-width: 2
   goimports:
     local-prefixes: github.com/ealebed/token-injector
   gocritic:
@@ -59,21 +60,9 @@ linters-settings:
           - cloud.google.com/go/compute/metadata
           - github.com/dgrijalva/jwt-go
           - github.com/pkg/errors
-          - github.com/prometheus/client_golang/prometheus
-          - github.com/prometheus/client_golang/prometheus/promhttp
-          - github.com/sirupsen/logrus
-          - github.com/slok/kubewebhook/v2/pkg/http
-          - github.com/slok/kubewebhook/v2/pkg/log/logrus
-          - github.com/slok/kubewebhook/v2/pkg/metrics/prometheus
-          - github.com/slok/kubewebhook/v2/pkg/model
-          - github.com/slok/kubewebhook/v2/pkg/webhook
-          - github.com/slok/kubewebhook/v2/pkg/webhook/mutating
-          - github.com/urfave/cli
-          - k8s.io/api/core/v1
-          - k8s.io/apimachinery/pkg/api/resource
-          - k8s.io/apimachinery/pkg/apis/meta/v1
-          - k8s.io/client-go/kubernetes
-          - sigs.k8s.io/controller-runtime/pkg/client/config
+          - github.com/urfave/cli/v2
+          - golang.org/x/oauth2/google
+          - google.golang.org/api/iamcredentials/v1
 
 formatters:
   enable:
