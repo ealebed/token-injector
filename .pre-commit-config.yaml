@@ -17,23 +17,70 @@ repos:
       - id: check-merge-conflict
       - id: detect-private-key
 
-  - repo: https://github.com/dnephin/pre-commit-golang
-    rev: v0.5.1
+  - repo: local
     hooks:
-      - id: go-fmt
-      - id: go-vet
-      - id: go-mod-tidy
-      - id: go-unit-tests
-        args: [-race]
-
-  - repo: https://github.com/golangci/golangci-lint
-    rev: v2.7.0
-    hooks:
-      - id: golangci-lint
-        name: golangci-lint (token-injector)
+      - id: go-fmt-token-injector
+        name: go fmt (token-injector)
+        entry: bash -c 'cd cmd/token-injector && go fmt ./...'
+        language: system
         files: ^cmd/token-injector/.*\.go$
-        args: [--timeout=4m, --config=cmd/token-injector/.golangci.yaml]
-      - id: golangci-lint
-        name: golangci-lint (token-injector-webhook)
+        pass_filenames: false
+      - id: go-fmt-token-injector-webhook
+        name: go fmt (token-injector-webhook)
+        entry: bash -c 'cd cmd/token-injector-webhook && go fmt ./...'
+        language: system
         files: ^cmd/token-injector-webhook/.*\.go$
-        args: [--timeout=4m, --config=cmd/token-injector-webhook/.golangci.yaml]
+        pass_filenames: false
+      - id: go-vet-token-injector
+        name: go vet (token-injector)
+        entry: bash -c 'cd cmd/token-injector && go vet ./...'
+        language: system
+        files: ^cmd/token-injector/.*\.go$
+        pass_filenames: false
+      - id: go-vet-token-injector-webhook
+        name: go vet (token-injector-webhook)
+        entry: bash -c 'cd cmd/token-injector-webhook && go vet ./...'
+        language: system
+        files: ^cmd/token-injector-webhook/.*\.go$
+        pass_filenames: false
+      - id: go-mod-tidy-token-injector
+        name: go mod tidy (token-injector)
+        entry: bash -c 'cd cmd/token-injector && go mod tidy'
+        language: system
+        files: ^cmd/token-injector/go\.(mod|sum)$
+        pass_filenames: false
+      - id: go-mod-tidy-token-injector-webhook
+        name: go mod tidy (token-injector-webhook)
+        entry: bash -c 'cd cmd/token-injector-webhook && go mod tidy'
+        language: system
+        files: ^cmd/token-injector-webhook/go\.(mod|sum)$
+        pass_filenames: false
+      - id: go-unit-tests-token-injector
+        name: go unit tests (token-injector)
+        entry: bash -c 'cd cmd/token-injector && go test ./... -race'
+        language: system
+        files: ^cmd/token-injector/.*\.go$
+        pass_filenames: false
+      - id: go-unit-tests-token-injector-webhook
+        name: go unit tests (token-injector-webhook)
+        entry: bash -c 'cd cmd/token-injector-webhook && go test ./... -race'
+        language: system
+        files: ^cmd/token-injector-webhook/.*\.go$
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: golangci-lint-token-injector
+        name: golangci-lint (token-injector)
+        entry: bash -c 'cd cmd/token-injector && golangci-lint run --timeout=4m --config=.golangci.yaml'
+        language: system
+        files: ^cmd/token-injector/.*\.go$
+        pass_filenames: false
+        always_run: false
+      - id: golangci-lint-token-injector-webhook
+        name: golangci-lint (token-injector-webhook)
+        entry: bash -c 'cd cmd/token-injector-webhook && golangci-lint run --timeout=4m --config=.golangci.yaml'
+        language: system
+        files: ^cmd/token-injector-webhook/.*\.go$
+        pass_filenames: false
+        always_run: false
