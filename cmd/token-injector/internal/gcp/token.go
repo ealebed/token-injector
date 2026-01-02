@@ -58,8 +58,16 @@ func (IDToken) GetDuration(jwtToken string) (time.Duration, error) {
 		return 0, fmt.Errorf("failed to parse jwtToken: %s", err.Error())
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		expClaim, exists := claims["exp"]
+		if !exists {
+			return 0, fmt.Errorf("failed to get claims from ID token: exp claim not found")
+		}
+		expNumber, ok := expClaim.(json.Number)
+		if !ok {
+			return 0, fmt.Errorf("failed to convert expire date: exp claim is not a number")
+		}
 		var unixTime int64
-		unixTime, err = claims["exp"].(json.Number).Int64()
+		unixTime, err = expNumber.Int64()
 		if err != nil {
 			return 0, fmt.Errorf("failed to convert expire date: %s", err.Error())
 		}
