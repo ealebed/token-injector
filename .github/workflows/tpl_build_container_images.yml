@@ -36,7 +36,7 @@ jobs:
           filters: |
             src:
               - 'cmd/token-injector/**'
-    
+
       - name: 'Detect token-injector-webhook changes'
         uses: dorny/paths-filter@v3
         id: changes-token-injector-webhook
