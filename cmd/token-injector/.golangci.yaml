@@ -1,83 +1,19 @@
-version: 2
+version: "2"
 
 run:
-  # Timeout for analysis, e.g. 30s, 5m.
-  # Default: 1m
   timeout: 5m
-  # Exit code when at least one issue was found.
-  # Default: 1
   issues-exit-code: 2
-  # Include test files or not.
-  # Default: true
   tests: false
 
-linters-settings:
-  govet:
-    enable:
-      - nilness
-      - shadow
-  gocyclo:
-    min-complexity: 15
-  dupl:
-    threshold: 100
-  goconst:
-    min-len: 2
-    min-occurrences: 3
-  misspell:
-    locale: US
-  lll:
-    line-length: 160
-    tab-width: 2
-  goimports:
-    local-prefixes: github.com/ealebed/token-injector
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - dupImport # https://github.com/go-critic/go-critic/issues/845
-      - ifElseChain
-      - octalLiteral
-      - rangeValCopy
-      - unnamedResult
-      - whyNoLint
-      - wrapperFunc
-  funlen:
-    lines: -1
-    statements: 50
-  depguard:
-    rules:
-      main:
-        files:
-          - $all
-          - "!$test"
-        allow:
-          - $gostd
-          - "github.com/ealebed/token-injector/token-injector/internal/gcp"
-          - "cloud.google.com/go/compute/metadata"
-          - "github.com/dgrijalva/jwt-go"
-          - "github.com/pkg/errors"
-          - "github.com/urfave/cli/v2"
-          - "golang.org/x/oauth2/google"
-          - "google.golang.org/api/iamcredentials/v1"
-
-formatters:
-  enable:
-    - gofmt
-    - goimports
-
 linters:
-  # please, do not use `enable-all`: it's deprecated and will be removed soon.
-  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
-  disable-all: true
+  default: none
   enable:
     - bodyclose
+    - depguard
     - dogsled
     - dupl
     - errcheck
+    - importas
     - funlen
     - goconst
     - gocritic
@@ -88,22 +24,73 @@ linters:
     - lll
     - misspell
     - nakedret
+    - nolintlint
     - staticcheck
     - unconvert
     - unparam
     - unused
     - whitespace
+  settings:
+    depguard:
+      rules:
+        main:
+          files:
+            - $all
+            - "!$test"
+          allow:
+            - $gostd
+            - github.com/ealebed/token-injector/token-injector
+            - github.com/ealebed/token-injector/token-injector/internal/gcp
+            - cloud.google.com/go/compute/metadata
+            - github.com/dgrijalva/jwt-go
+            - github.com/pkg/errors
+            - github.com/urfave/cli/v2
+            - golang.org/x/oauth2
+            - google.golang.org/api
+            - google.golang.org/api/iamcredentials/v1
+    govet:
+      enable:
+        - nilness
+        - shadow
+    gocyclo:
+      min-complexity: 15
+    dupl:
+      threshold: 100
+    goconst:
+      min-len: 2
+      min-occurrences: 3
+    misspell:
+      locale: US
+    lll:
+      line-length: 160
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+      disabled-checks:
+        - dupImport # https://github.com/go-critic/go-critic/issues/845
+        - ifElseChain
+        - octalLiteral
+        - rangeValCopy
+        - unnamedResult
+        - whyNoLint
+        - wrapperFunc
+    funlen:
+      lines: -1
+      statements: 50
 
-  # don't enable:
-  # - gochecknoglobals
-  # - gocognit
-  # - godox
-  # - maligned
-  # - prealloc
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/ealebed/token-injector
 
 issues:
-    exclude:
-      - Using the variable on range scope `tt` in function literal
-    # which dirs to skip
-    exclude-dirs:
-      - mocks
+  max-issues-per-linter: 0
+  max-same-issues: 0

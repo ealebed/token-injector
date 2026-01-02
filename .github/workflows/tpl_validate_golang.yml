@@ -13,16 +13,10 @@ jobs:
       - name: 'Checkout code'
         uses: actions/checkout@v4
 
-      - name: 'Install Golang'
-        uses: actions/setup-go@v4
+      - name: 'Set up Go'
+        uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
-          cache: false
-
-      - name: 'Install golangci-lint'
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin latest
-          $(go env GOPATH)/bin/golangci-lint version
+          go-version: '1.25.x'
 
       - name: 'Detect token-injector changes'
         uses: dorny/paths-filter@v3
@@ -31,7 +25,7 @@ jobs:
           filters: |
             src:
               - 'cmd/token-injector/**'
-  
+
       - name: 'Detect token-injector-webhook changes'
         uses: dorny/paths-filter@v3
         id: changes-token-injector-webhook
@@ -40,16 +34,18 @@ jobs:
             src:
               - 'cmd/token-injector-webhook/**'
 
-      - name: 'golangci lint token-injector'
-        # run only if some file in 'src' folder was changed
+      - name: 'golangci lint (token-injector)'
         if: steps.changes-token-injector.outputs.src == 'true'
-        run: |
-          $(go env GOPATH)/bin/golangci-lint run --timeout 4m --config .golangci.yaml
-        working-directory: cmd/token-injector/
-  
-      - name: 'golangci lint token-injector-webhook'
-        # run only if some file in 'src' folder was changed
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.7
+          working-directory: cmd/token-injector
+          args: --timeout 4m --config .golangci.yaml
+
+      - name: 'golangci lint (token-injector-webhook)'
         if: steps.changes-token-injector-webhook.outputs.src == 'true'
-        run: |
-          $(go env GOPATH)/bin/golangci-lint run --timeout 4m --config .golangci.yaml
-        working-directory: cmd/token-injector-webhook/
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.7
+          working-directory: cmd/token-injector-webhook
+          args: --timeout 4m --config .golangci.yaml

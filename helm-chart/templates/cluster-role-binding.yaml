@@ -2,7 +2,7 @@
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: admission-webhook-crb 
+  name: admission-webhook-crb
   labels:
   {{- range $key, $value := .Values.labels }}
     {{ $key }}: {{ tpl ($value | toString) $ }}

@@ -8,3 +8,22 @@ updates:
     directory: "/cmd/token-injector-webhook"
     schedule:
       interval: "daily"
+
+  - package-ecosystem: "docker"
+    directory: "/cmd/token-injector"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "docker"
+    directory: "/cmd/token-injector-webhook"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "terraform"
+    directory: "/"
+    schedule:
+      interval: "daily"
