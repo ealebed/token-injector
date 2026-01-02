@@ -30,4 +30,10 @@ repos:
     rev: v2.7.0
     hooks:
       - id: golangci-lint
-        args: [--timeout=4m, --config=.golangci.yaml]
+        name: golangci-lint (token-injector)
+        files: ^cmd/token-injector/.*\.go$
+        args: [--timeout=4m, --config=cmd/token-injector/.golangci.yaml]
+      - id: golangci-lint
+        name: golangci-lint (token-injector-webhook)
+        files: ^cmd/token-injector-webhook/.*\.go$
+        args: [--timeout=4m, --config=cmd/token-injector-webhook/.golangci.yaml]
