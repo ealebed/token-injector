@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
@@ -150,18 +149,18 @@ func handlerFor(config mutating.WebhookConfig, recorder wh.MetricsRecorder, logg
 
 // getAwsRoleArn retrieves the AWS role ARN from a Kubernetes ServiceAccount annotation.
 // It takes a context, service account name, and namespace as parameters.
-// It returns the role ARN, a boolean indicating whether the annotation was found, and an error if one occurred.
-func (mw *mutatingWebhook) getAwsRoleArn(ctx context.Context, name, ns string) (string, bool, error) {
+// It returns the role ARN and a boolean indicating whether the annotation was found.
+// On failure to fetch the ServiceAccount, it logs and exits via Fatalf.
+func (mw *mutatingWebhook) getAwsRoleArn(ctx context.Context, name, ns string) (string, bool) {
 	sa, err := mw.k8sClient.CoreV1().ServiceAccounts(ns).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		logger.WithFields(log.Fields{
 			"service account": name,
 			"namespace":       ns,
 		}).WithError(err).Fatalf("error getting service account")
-		return "", false, err
 	}
 	roleArn, ok := sa.GetAnnotations()[awsRoleArnKey]
-	return roleArn, ok, nil
+	return roleArn, ok
 }
 
 // mutateContainers modifies the given list of containers.
@@ -201,15 +200,12 @@ func (mw *mutatingWebhook) mutateContainers(containers []corev1.Container, roleA
 	return true
 }
 
-func (mw *mutatingWebhook) mutatePod(ctx context.Context, pod *corev1.Pod, ns string, dryRun bool) error {
+func (mw *mutatingWebhook) mutatePod(ctx context.Context, pod *corev1.Pod, ns string, dryRun bool) {
 	// get service account AWS Role ARN annotation
-	roleArn, ok, err := mw.getAwsRoleArn(ctx, pod.Spec.ServiceAccountName, ns)
-	if err != nil {
-		return err
-	}
+	roleArn, ok := mw.getAwsRoleArn(ctx, pod.Spec.ServiceAccountName, ns)
 	if !ok {
 		logger.Debug("skipping pods with Service Account without AWS Role ARN annotation")
-		return nil
+		return
 	}
 	// mutate Pod init containers
 	initContainersMutated := mw.mutateContainers(pod.Spec.InitContainers, roleArn)
@@ -239,8 +235,6 @@ func (mw *mutatingWebhook) mutatePod(ctx context.Context, pod *corev1.Pod, ns st
 		pod.Spec.Volumes = append(pod.Spec.Volumes, getInjectorVolume(mw.volumeName))
 		logger.Debug("successfully appended pod spec volumes")
 	}
-
-	return nil
 }
 
 // getInjectorVolume creates and returns a Kubernetes Volume object configured as an in-memory EmptyDir volume.
@@ -328,10 +322,7 @@ func (mw *mutatingWebhook) podMutator(
 ) (*mutating.MutatorResult, error) {
 	switch v := obj.(type) {
 	case *corev1.Pod:
-		err := mw.mutatePod(ctx, v, ar.Namespace, ar.DryRun)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to mutate pod: %s", v.Name)
-		}
+		mw.mutatePod(ctx, v, ar.Namespace, ar.DryRun)
 		return &mutating.MutatorResult{MutatedObject: v}, nil
 	default:
 		return &mutating.MutatorResult{}, nil

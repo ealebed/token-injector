@@ -176,7 +176,6 @@ func Test_mutatingWebhook_mutatePod(t *testing.T) {
 		name      string
 		fields    fields
 		args      args
-		wantErr   bool
 		wantedPod *corev1.Pod
 	}{
 		{
@@ -296,9 +295,7 @@ func Test_mutatingWebhook_mutatePod(t *testing.T) {
 				volumePath: tt.fields.volumePath,
 				tokenFile:  tt.fields.tokenFile,
 			}
-			if err := mw.mutatePod(context.TODO(), tt.args.pod, tt.args.ns, tt.args.dryRun); (err != nil) != tt.wantErr {
-				t.Errorf("mutatingWebhook.mutatePod() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			mw.mutatePod(context.TODO(), tt.args.pod, tt.args.ns, tt.args.dryRun)
 			if !cmp.Equal(tt.args.pod, tt.wantedPod) {
 				t.Errorf("mutatingWebhook.mutateContainers() = diff %v", cmp.Diff(tt.args.pod, tt.wantedPod))
 			}
