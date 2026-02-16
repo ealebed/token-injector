@@ -4,7 +4,6 @@ go 1.25.0
 
 require (
 	github.com/google/go-cmp v0.7.0
-	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sirupsen/logrus v1.9.4
 	github.com/slok/kubewebhook/v2 v2.7.0
