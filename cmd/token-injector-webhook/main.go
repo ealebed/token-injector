@@ -84,8 +84,9 @@ func randomString(l int) string {
 	}
 	r := rand.New(rand.NewSource(time.Now().UnixNano())) // #nosec G404
 	bytes := make([]byte, l)
+	const letters = "abcdefghijklmnopqrstuvwxyz"
 	for i := range bytes {
-		bytes[i] = byte(r.Intn(26) + 97) // 'a' = 97 and 'z' = 122
+		bytes[i] = letters[r.Intn(len(letters))]
 	}
 
 	return string(bytes)
