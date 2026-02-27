@@ -8,6 +8,8 @@ jobs:
     name: 'Validate golang layer'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      GOLANGCI_LINT_VERSION: v2.7
 
     steps:
       - name: 'Checkout code'
@@ -38,7 +40,7 @@ jobs:
         if: steps.changes-token-injector.outputs.src == 'true'
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.7
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
           working-directory: cmd/token-injector
           args: --timeout 4m --config .golangci.yaml
 
@@ -46,6 +48,6 @@ jobs:
         if: steps.changes-token-injector-webhook.outputs.src == 'true'
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.7
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
           working-directory: cmd/token-injector-webhook
           args: --timeout 4m --config .golangci.yaml
