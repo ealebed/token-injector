@@ -55,7 +55,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: 'Build and push token-injector container image'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         # run only if some file in 'src' folder was changed or workflow was triggered manually
         if: ${{ (github.event_name == 'workflow_dispatch') || steps.changes-token-injector.outputs.src == 'true' }}
         with:
@@ -64,7 +64,7 @@ jobs:
           tags: ${{ vars.DOCKERHUB_USERNAME }}/token-injector:${{ steps.tagger.outputs.tag }}
 
       - name: 'Build and push token-injector-webhook container image'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         # run only if some file in 'src' folder was changed or workflow was triggered manually
         if: ${{ (github.event_name == 'workflow_dispatch') || steps.changes-token-injector-webhook.outputs.src == 'true' }}
         with:
