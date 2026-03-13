@@ -21,7 +21,7 @@ jobs:
           go-version: '1.26.x'
 
       - name: 'Detect token-injector changes'
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: changes-token-injector
         with:
           filters: |
@@ -29,7 +29,7 @@ jobs:
               - 'cmd/token-injector/**'
 
       - name: 'Detect token-injector-webhook changes'
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: changes-token-injector-webhook
         with:
           filters: |
