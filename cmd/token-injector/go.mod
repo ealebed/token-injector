@@ -9,7 +9,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v2 v2.27.7
 	golang.org/x/oauth2 v0.36.0
-	google.golang.org/api v0.281.0
+	google.golang.org/api v0.282.0
 )
 
 require (
