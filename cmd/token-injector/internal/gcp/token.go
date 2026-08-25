@@ -78,32 +78,20 @@ func (IDToken) GetDuration(jwtToken string) (time.Duration, error) {
 }
 
 func (IDToken) WriteToFile(token, fileName string) error {
-	// this is a slice of io.Writers we will write the file to
-	var writers []io.Writer
-
-	// if no file provided
-	if fileName == "" {
-		writers = append(writers, os.Stdout)
-	}
-
-	// if DestFile was provided, lets try to create it and add to the writers
+	dest := io.Writer(os.Stdout)
 	if fileName != "" {
 		file, err := os.Create(fileName) //nolint:gosec // G304: fileName is controlled by user input
 		if err != nil {
 			return fmt.Errorf("failed to create token file: %s; error: %s", fileName, err.Error())
 		}
-		writers = append(writers, file)
 		defer func() {
 			if closeErr := file.Close(); closeErr != nil {
 				// Log error but don't fail if file was already written
 				log.Printf("failed to close file: %s", closeErr)
 			}
 		}()
+		dest = file
 	}
-	// MultiWriter(io.Writer...) returns a single writer which multiplexes its
-	// writes across all of the writers we pass in.
-	dest := io.MultiWriter(writers...)
-	// write to dest the same way as before, copying from the Body
 	if _, err := io.WriteString(dest, token); err != nil {
 		return fmt.Errorf("failed to write token: %s", err.Error())
 	}

@@ -1,6 +1,6 @@
 module github.com/ealebed/token-injector/token-injector-webhook
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/google/go-cmp v0.7.0

@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      GOLANGCI_LINT_VERSION: v2.12.2
+      GOLANGCI_LINT_VERSION: v2.13.0
 
     steps:
       - name: 'Checkout code'
@@ -19,6 +19,22 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version-file: cmd/token-injector/go.mod
+
+      - name: 'Test token-injector'
+        working-directory: cmd/token-injector
+        run: go test -timeout 15s ./...
+
+      - name: 'Test token-injector-webhook'
+        working-directory: cmd/token-injector-webhook
+        run: go test -timeout 15s ./...
+
+      - name: 'Build token-injector'
+        working-directory: cmd/token-injector
+        run: go build -o /dev/null .
+
+      - name: 'Build token-injector-webhook'
+        working-directory: cmd/token-injector-webhook
+        run: go build -o /dev/null .
 
       - name: 'Detect token-injector changes'
         uses: dorny/paths-filter@v4

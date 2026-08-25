@@ -3,12 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -75,18 +74,14 @@ var logger *log.Logger
 
 // randomString generates a random string of lowercase a-z characters with the specified length (l).
 // If testMode is enabled, it returns a string of repeated '0' characters of the specified length.
-// Otherwise, it creates a new random generator seeded with the current time (in nanoseconds)
-// to ensure different outputs each time it's called. The function then fills a byte slice with
-// random letters from 'a' to 'z' and converts it to a string before returning.
 func randomString(l int) string {
 	if testMode {
 		return strings.Repeat("0", l)
 	}
-	r := rand.New(rand.NewSource(time.Now().UnixNano())) // #nosec G404
-	bytes := make([]byte, l)
 	const letters = "abcdefghijklmnopqrstuvwxyz"
+	bytes := make([]byte, l)
 	for i := range bytes {
-		bytes[i] = letters[r.Intn(len(letters))]
+		bytes[i] = letters[rand.IntN(len(letters))] // #nosec G404 -- session name suffix, not a security token
 	}
 
 	return string(bytes)
