@@ -20,10 +20,10 @@ import (
 // observed to timeout often on GKE when using Workload Identities.
 var metadataClient = metadata.NewClient(&http.Client{
 	Transport: &http.Transport{
-		Dial: (&net.Dialer{
+		DialContext: (&net.Dialer{
 			Timeout:   10 * time.Second,
 			KeepAlive: 30 * time.Second,
-		}).Dial,
+		}).DialContext,
 		ResponseHeaderTimeout: 15 * time.Second, // default is 2
 	},
 })
