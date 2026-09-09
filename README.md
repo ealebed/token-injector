@@ -47,6 +47,9 @@ All required steps for configuring Kubernetes Mutating Admission webhook are des
 - [Terraform configuration](./docs/terraform_configuration.md)
 - [HELM chart configuration](./docs/helm_configuration.md)
 
+## Dependabot automation
+Minor and patch Dependabot PRs are approved and squash-merged by a GitHub App after required CI passes. See [Dependabot automation](./docs/dependabot-automation.md).
+
 ## External references
 - [Amazon EKS Pod Identity Webhook](https://github.com/aws/amazon-eks-pod-identity-webhook)
 - [Azure AD Workload Identity webhook](https://github.com/Azure/azure-workload-identity?tab=readme-ov-file)
